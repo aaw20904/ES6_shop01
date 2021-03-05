@@ -1,0 +1,45 @@
+/*font-family: 'Akaya Telivigala', cursive;
+font-family: 'Roboto Mono', monospace;*/
+li.goodsItem {
+    margin: 18px;
+    color: black;
+     border: 1px solid #aaaaaa;
+    display:flex;
+    flex-flow:column nowrap;
+    justify-content: space-around;
+    align-items: center;
+    width: 40vw;
+    cursor: pointer;
+}
+
+li.goodsItem>.title {
+     color: black;
+    display:block;
+    margin: 10px;
+    font-family: 'Akaya Telivigala', cursive;
+    font-size: 24px;
+}
+
+li.goodsItem>.price {
+    color: black;
+    display:block;
+    font-family: 'Akaya Telivigala', cursive;
+    font-size: 18px;
+    margin: 8px;
+}
+
+ul.goodsPanel{
+  
+    display: flex;
+    flex-flow:row wrap;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/*******************************************
+M E D I A          Q U E R I E S ******/
+@media screen and (max-width:365px) {
+    li.goodsItem{
+        width:100%;
+    }
+}
