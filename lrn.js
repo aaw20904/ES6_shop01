@@ -1,8 +1,7 @@
-let  DataService = (function(){
+let  DataService = (function () {
   let accessor = new WeakMap();
   let privObj = new Map();
  
-
   class dataService{
     constructor () {
       accessor.set (this, privObj);
@@ -22,21 +21,134 @@ let  DataService = (function(){
       return {exec:this.getData, context:this};
     }
   }
-return dataService
+return dataService;
+})();
+/**********************************
+ * returns an iterator for update 
+ * a <picture> node.
+ * There are two parameters in "value":
+ * 1)exec() - for update a node
+ * 2)key - a key of specify node inside a <picture>********/
+let pictureIter = (function () {
+  let privObj = {
+     idOfNode: null,
+     [Symbol.iterator](itemID){
+       let children;
+       let result;
+       let index = 0;
+       let tmpIndex;
+       /*get a parent*/
+       let node = document.querySelector('.goodsPanel');
+       /*get an item*/
+       node = node.querySelector('[data-good-id=' + itemID + ']');
+       /*get a picture*/
+       node = node.querySelector('picture');
+       /*get child nodes*/
+       children = node.childNodes;
+       return {
+         next: function () {
+           
+           if (index < children.length ) {
+              
+             let attr = children[index].getAttribute('data-items-g');
+             tmpIndex = index;
+             switch (attr) {
+               case 'medium':
+                result = {value:{ key:attr, exec:(x)=>{children[tmpIndex].setAttribute('srcset',x)} }, done:false};   
+               break;
+               case 'small':
+                result = {value:{ key:attr, exec:(x)=>{children[tmpIndex].setAttribute('srcset',x)} }, done:false};
+               break;
+               case 'big':
+                result = {value:{ key:attr, exec:(x)=>{children[tmpIndex].setAttribute('src', x)} }, done:false};
+               break;
+             }
+             index++;
+              return result;
+           } else {
+             return {value: undefined, done: true};
+           }
 
+         }
+       }
+     }
+  }  
+  let m = new WeakMap;
+  
+  class pictIter {
+    constructor (nodeId) {
+      m.set(this,privObj);
+      privObj.idOfNode = nodeId;
+    }
+
+    getIter (nodeID) {
+      let s = m.get(this);
+      return s[Symbol.iterator](nodeID);
+    }
+  }
+ return pictIter;
 })();
 
+/******************************
+ * returns an iterator that contains
+ * a key and exec- function (update a node with
+ a specify key)*********This class update a <DIV> nodes inside a <LI> item*/
+let itemsNodesGetter = (function () {
+     let secMember = {
+        [Symbol.iterator](id){
+          let result;
+          let children;
+          let index = 0;
+          let tmpIndex;
+          /*get a list node*/
+          let node = document.querySelector('.goodsPanel');
+          /*get a concrete <li>*/
+          node = node.querySelector('[data-good-id=' + id + ']');
+          children = node.getElementsByTagName('div');
+          return {
+            next: ()=>{
+              
+              if (index < children.length) {
+                let attr = children[index].getAttribute('data-items-g'); 
+                  tmpIndex = index;
+                  index++;
+                switch(attr) {
+                  case 'title':
+                    result = {value:{key:attr, exec:(x)=>{children[tmpIndex].innerText=x;}}, done:false}; 
+                  break;
+                  case 'price':
+                    result = {value:{key:attr, exec:(x)=>{children[tmpIndex].innerText=x;}}, done:false}; 
+                  break;
+                }
+                return result;
 
+              } else {
+                 return {value: undefined, done:true};
+              }
+           }
+         }
+        }
+     }
+     let m = new WeakMap();
+     class myClass {
+       constructor(){
+         m.set(this,secMember);
+       }
+       getIter(id) {
+         let k = m.get(this);
+         return k[Symbol.iterator](id);
+       }
+     }
+     return myClass;
+})();
 
-/********************************************** */
-
-let ItemsTextNodesGetter = (function(){
+/***********************************************/
+/**************!!!*****OLD*************************/
+let ItemsTextNodesGetter = (function () {
   /*a secret member*/
   let priv = {
-
     links: new Set(['medium',"small","big","title","price"]),
-    [Symbol.iterator](z){
-
+    [Symbol.iterator](z) {
       /* FIRSTLY  - get a UL ode,
       SECONDLY - get an li node by attribute [attr= ...]  QuerySelector()
       THIRDLY - get a specified sumitem i.e. title, price etc */
@@ -97,7 +209,7 @@ let m = new WeakMap();
 
 })();
 
-/*********************************************** */
+/****************************************************/
 
 
 let ItemsIteratorCreator = (function(){
@@ -109,9 +221,11 @@ let ItemsIteratorCreator = (function(){
    }
 })();
 
-
-
-
+/*a fabrica of <LI> nodes
+ * with a specific content -
+ * this content is defined 
+ * into private members 
+ */
 const GoodsItemConstructor = (function () {
   const m = new WeakMap();
   const secretObj = new Map();
@@ -120,7 +234,7 @@ const GoodsItemConstructor = (function () {
     constructor () {
       let tmp;
       m.set(this, secretObj);
-      secretObj.set('t1', '<source data-items-g="medium" srcset="');
+      secretObj.set('t1', '<picture><source data-items-g="medium" srcset="');
       secretObj.set('medium_img', 'undefined_medium.svg');
       tmp = '" media="(min-width: 365px)' +
        ' and (max-width: 800px)"><source data-items-g="small" srcset="';
@@ -173,7 +287,11 @@ const GoodsItemConstructor = (function () {
   return GoodsItem;
 })();
 
-
+/*this class contains 
+an instance of fabrica. It can  
+add/remove an item from an <UL>
+node. It also bind/unbind 
+an event listener*/
 let ListMgr = (function(){
 
  let m = new WeakMap();
@@ -189,8 +307,6 @@ let ListMgr = (function(){
         /*bind to an event listener*/
         node.addEventListener ('click', listener, false);
    },
-
-   
 
    removeItem: (id, listener)=>{
     let node =ListMgr.getNodeByID (id);
@@ -260,6 +376,69 @@ return ListMgr;
 
 })();
 
+
+/*******************************
+ * the method -getUpdateHandler()
+ * returns an handler for updating
+ * existing nodes inside <UL>.It can
+ * be updated by an asyncrone callback 
+ *******FOR callbacks*************/
+ let ItemsUpdater = (function(){
+  let m = new WeakMap();
+  let privObj = {
+    updater: function (key,myMap) {
+        let result;
+        let tmp;
+        let fieldsUpdater = new itemsNodesGetter();
+        let pictureUpdater = new pictureIter();
+        /*get iterators*/
+        let iter = pictureUpdater.getIter(key);
+       
+        /*processing of a picture iterator*/
+        /*1)init*/
+         result =  iter.next();
+         while (!result.done) {
+           /*2)get a key*/
+           tmp = myMap.get(result.value.key);
+           /*3)assign a value*/
+           result.value.exec(tmp);
+           /*4) get a new result*/
+           result =  iter.next();
+         }
+         iter = fieldsUpdater.getIter(key);
+         /*processing of a text"div" iterator*/
+        /*1)init*/
+        result =  iter.next();
+        while (!result.done) {
+          /*2)get a key*/
+          tmp = myMap.get(result.value.key);
+          /*3)assign a value*/
+          result.value.exec(tmp);
+           /*4) get a new result*/
+           result =  iter.next();
+
+        }
+        iter = fieldsUpdater.getIter(key);
+    }
+  } 
+
+
+  class Updater {
+    constructor () {
+      m.set(this,privObj);  
+    }
+
+    getUpdateHandler () {
+      let q = m.get(this);
+      return q.updater;
+    }
+  }
+  return Updater;
+
+})();
+
+
+
 function Ext01 () {
   let obj = {};
   return {
@@ -303,17 +482,15 @@ window.onload = function () {
   let result;
   let mgr = new ListMgr(onClick, dService1.getInterface());
   mgr.insertNode('id001');
-
-  let testInst = new ItemsTextNodesGetter();
-  let it1 = testInst.getIterFieldsOfNodeByID('id001');
-  let tmp001 = it1.next();
-  tmp001.value.command('test1');
-  tmp001 = it1.next();
-  tmp001.value.command('test2');
-  tmp001 = it1.next();
-  tmp001.value.command('test3');
-  tmp001 = it1.next();
-  tmp001.value.command('test4');
- // mgr.removeNode('id001');
+  let var01 = new Map();
+  var01.set('medium','imgMed');
+  var01.set('small','imgSmall');
+  var01.set('big','imgBig');
+  var01.set('title','UnTitled');
+  var01.set('price','unPriced');
+  var01.set('x','zero');
+  let testInst = new ItemsUpdater();
+  let callbackFunc01 = testInst.getUpdateHandler();
+  callbackFunc01('id001',var01);
 
 };
