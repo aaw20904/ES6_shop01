@@ -2,7 +2,7 @@ let  DataService = (function () {
   let accessor = new WeakMap();
   let privObj = new Map();
  
-  class dataService{
+  class   dataService{
     constructor () {
       accessor.set (this, privObj);
     }
@@ -23,12 +23,42 @@ let  DataService = (function () {
   }
 return dataService;
 })();
+
+function pr1( ){
+  return new Promise((resolve,reject)=>{
+    setTimeout(()=>{resolve(1)},1000);
+  });
+}
+
+function pr2 (x) {
+  return new Promise((resolve,reject)=>{
+    setTimeout(()=>{resolve(2+x)},1000);
+  })
+}
+
+/****************************************************************/
+/*************query to a server simulate function****************/
+function getGoddsInfoByID (id) {
+     let lst = new Map();
+     lst.set('id001',new Map([ ['medium','salt_medium.jpg'], ['big','salt_big.jpg'], ['small','salt_small.jpg'], ['title','SALT'], ['price', 1.5] ]));
+     lst.set('id002',new Map([ ['medium','tomato_medium.jpg'], ['big','tomato_big.jpg'], ['small','tomato_small.jpg'], ['title','Pomodor'], ['price', 2.5] ]));
+     lst.set('id003',new Map([ ['medium','bread_medium.jpg'], ['big','bread_big.jpg'], ['small','bread_small.jpg'], ['title','Bread'], ['price', 1.45] ]));
+     lst.set('id004',new Map([ ['medium','milk_medium.jpg'], ['big','milk_big.jpg'], ['small','milk_small.jpg'], ['title','Milk'], ['price', 5.5] ]));
+
+return new Promise((resolve,reject)=>{
+      /*contain a map any values*/
+      setTimeout(()=>{
+        resolve(StaticUpdater(id,lst.get(id)));
+      }, 2000);
+  });
+}
+
 /**********************************
- * returns an iterator for update 
- * a <picture> node.
+ * returns an iterator for update  a <picture> node.
  * There are two parameters in "value":
  * 1)exec() - for update a node
- * 2)key - a key of specify node inside a <picture>********/
+ * 2)key - a key of specify node inside a <picture>**
+ * ************************************************/
 let pictureIter = (function () {
   let privObj = {
      idOfNode: null,
@@ -104,6 +134,8 @@ let itemsNodesGetter = (function () {
           let node = document.querySelector('.goodsPanel');
           /*get a concrete <li>*/
           node = node.querySelector('[data-good-id=' + id + ']');
+          /*setting opacity = 1.0*/
+          node.style.opacity = '';
           children = node.getElementsByTagName('div');
           return {
             next: ()=>{
@@ -267,6 +299,8 @@ const GoodsItemConstructor = (function () {
       /* copy a map */
       const obj = new Map(m.get(this));
       const elemForInsert = document.createElement('li');
+      /*make aa element semitransparent*/
+      elemForInsert.style.opacity = 0.3;
       /* create an element */
       elemForInsert.setAttribute('class', 'goodsItem');
       
@@ -286,6 +320,51 @@ const GoodsItemConstructor = (function () {
 
   return GoodsItem;
 })();
+
+
+/**********a StaticUpdater - function*************/
+ let StaticUpdater =  (key,myMap)=>{
+  let result;
+  let tmp;
+  let fieldsUpdater = new itemsNodesGetter();
+  let pictureUpdater = new pictureIter();
+  /*get iterators*/
+  let iter = pictureUpdater.getIter(key);
+  /*if a node isn`t exists*/
+    if(!iter) {
+      return null;
+    }
+  /*processing of a picture iterator*/
+  /*1)init*/
+   result =  iter.next();
+   while (!result.done) {
+     /*2)get a key*/
+     tmp = myMap.get(result.value.key);
+     /*3)assign a value*/
+     result.value.exec(tmp);
+     /*4) get a new result*/
+     result =  iter.next();
+   }
+   iter = fieldsUpdater.getIter(key);
+   /*processing of a text"div" iterator*/
+  /*1)init*/
+  result =  iter.next();
+  while (!result.done) {
+    /*2)get a key*/
+    tmp = myMap.get(result.value.key);
+    /*3)assign a value*/
+    result.value.exec(tmp);
+     /*4) get a new result*/
+     result =  iter.next();
+
+  }
+  iter = fieldsUpdater.getIter(key);
+}
+
+
+
+
+
 
 /*this class contains 
 an instance of fabrica. It can  
@@ -393,7 +472,10 @@ return ListMgr;
         let pictureUpdater = new pictureIter();
         /*get iterators*/
         let iter = pictureUpdater.getIter(key);
-       
+        /*if a node isn`t exists*/
+          if(!iter) {
+            return null;
+          }
         /*processing of a picture iterator*/
         /*1)init*/
          result =  iter.next();
@@ -462,6 +544,7 @@ class myClass {
 
 function onClick (evt) {
   alert(new Date().toLocaleTimeString());
+  console.log(evt.currentTarget.getAttribute('data-good-id'));
 }
 
 window.onload = function () {
@@ -482,15 +565,14 @@ window.onload = function () {
   let result;
   let mgr = new ListMgr(onClick, dService1.getInterface());
   mgr.insertNode('id001');
-  let var01 = new Map();
-  var01.set('medium','imgMed');
-  var01.set('small','imgSmall');
-  var01.set('big','imgBig');
-  var01.set('title','UnTitled');
-  var01.set('price','unPriced');
-  var01.set('x','zero');
-  let testInst = new ItemsUpdater();
-  let callbackFunc01 = testInst.getUpdateHandler();
-  callbackFunc01('id001',var01);
-
+  mgr.insertNode('id002');
+  mgr.insertNode('id003');
+  mgr.insertNode('id004');
+  
+  let x001 = getGoddsInfoByID('id001');
+ x001.then( getGoddsInfoByID.bind(null,'id002') )
+  .then( getGoddsInfoByID.bind(null,'id003'))
+  .then( getGoddsInfoByID.bind(null,'id004'))
+  .catch();
+ 
 };
